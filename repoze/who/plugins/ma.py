@@ -17,7 +17,6 @@
 """
 SQLAlchemy plugin for repoze.who.
 
-TODO: Write a function that configures both plugins in one go.
 
 """
 
@@ -35,7 +34,7 @@ __all__ = ['SQLAlchemyAuthenticatorPlugin', 'SQLAlchemyUserMDPlugin',
 
 class _BaseSQLAlchemyPlugin(object):
     
-    def __init__(self, user_class, dbsession):
+    def __init__(self, user_class, dbsession = None):
         """
         Setup the plugin.
     
@@ -49,10 +48,10 @@ class _BaseSQLAlchemyPlugin(object):
     
     def get_user(self, username):
         # Getting a translation:
-        username_attr = getattr(self.user_class,
+        username_attr = getattr(self.user_class.mongo_cls(),
                                 self.translations['user_name'])
         
-        query = self.dbsession.query(self.user_class)
+        query = self.user_class.mongo_cls().query(self.user_class)
         query = query.filter(username_attr==username)
         
         try:
@@ -188,17 +187,15 @@ class SQLAlchemyStrictUserMDPlugin(SQLAlchemyUserMDPlugin):
 #{ Functions to instantiate the plugins from a Paste configuration
 
 
-def _base_plugin_maker(user_class=None, dbsession=None):
+def _base_plugin_maker(user_class=None):
     """
-    Turn ``userclass`` and ``dbsession`` into Python objects.
+    Turn ``userclass`` into Python object.
     
     """
     
     if user_class is None:
         raise ValueError('user_class must not be None')
-    if dbsession is None:
-        raise ValueError('dbsession must not be None')
-    return resolveDotted(user_class), resolveDotted(dbsession)
+    return resolveDotted(user_class)
 
 
 def make_sa_authenticator(user_class=None, dbsession=None, 
@@ -241,9 +238,9 @@ def make_sa_authenticator(user_class=None, dbsession=None,
     
     """
     
-    user_model, dbsession_object = _base_plugin_maker(user_class, dbsession)
+    user_model = _base_plugin_maker(user_class)
     
-    authenticator = SQLAlchemyAuthenticatorPlugin(user_model, dbsession_object)
+    authenticator = SQLAlchemyAuthenticatorPlugin(user_model)
     
     if user_name_translation:
         authenticator.translations['user_name'] = user_name_translation
@@ -303,7 +300,7 @@ def make_sa_user_mdprovider(user_class=None, dbsession=None,
     
     """
     
-    user_model, dbsession_object = _base_plugin_maker(user_class, dbsession)
+    user_model = _base_plugin_maker(user_class)
     
     if not isinstance(strict, bool):
         if strict.lower() == 'true':
@@ -312,9 +309,9 @@ def make_sa_user_mdprovider(user_class=None, dbsession=None,
             strict = False
     
     if strict:
-        mdprovider = SQLAlchemyStrictUserMDPlugin(user_model, dbsession_object)
+        mdprovider = SQLAlchemyStrictUserMDPlugin(user_model)
     else:
-        mdprovider = SQLAlchemyUserMDPlugin(user_model, dbsession_object)
+        mdprovider = SQLAlchemyUserMDPlugin(user_model)
     
     if user_name_translation:
         mdprovider.translations['user_name'] = user_name_translation
