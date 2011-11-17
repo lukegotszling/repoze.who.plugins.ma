@@ -51,12 +51,12 @@ class _BaseSQLAlchemyPlugin(object):
         username_attr = getattr(self.user_class.mongo_cls(),
                                 self.translations['user_name'])
         
-        query = self.user_class.mongo_cls().query(self.user_class)
+        query = self.user_class.mongo_cls().query()
         query = query.filter(username_attr==username)
         
         try:
             return query.one()
-        except (NoResultFound, MultipleResultsFound):
+        except:
             # As recommended in the docs for repoze.who, it's important to
             # verify that there's only _one_ matching userid.
             return None
