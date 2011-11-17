@@ -25,7 +25,8 @@ from paste.httpexceptions import HTTPUnauthorized
 
 from repoze.who.interfaces import IAuthenticator, IMetadataProvider
 from repoze.who.utils import resolveDotted
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+# The following relies on the shakefu fork of mongoalchemy
+from mongoalchemy.exceptions import NoResultFound, MultipleResultsFound
 
 
 __all__ = ['SQLAlchemyAuthenticatorPlugin', 'SQLAlchemyUserMDPlugin',
@@ -56,7 +57,7 @@ class _BaseSQLAlchemyPlugin(object):
         
         try:
             return query.one()
-        except:
+        except (NoResultFound, MultipleResultsFound):
             # As recommended in the docs for repoze.who, it's important to
             # verify that there's only _one_ matching userid.
             return None
